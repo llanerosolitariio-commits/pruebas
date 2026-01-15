@@ -1,0 +1,36 @@
+const peer = new Peer(); // Crea un ID aleatorio para este dispositivo
+let localStream;
+
+// Al abrir, mostramos nuestro ID y pedimos permiso de cámara
+peer.on('open', (id) => {
+    document.getElementById('my-id').innerText = id;
+    startCamera();
+});
+
+// Función para activar la cámara local
+async function startCamera() {
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        document.getElementById('local-video').srcObject = localStream;
+    } catch (err) {
+        console.error("Error al acceder a la cámara: ", err);
+        alert("Asegúrate de dar permisos de cámara y usar HTTPS");
+    }
+}
+
+// Escuchar llamadas entrantes
+peer.on('call', (call) => {
+    call.answer(localStream); // Responde con nuestra transmisión
+    call.on('stream', (remoteStream) => {
+        document.getElementById('remote-video').srcObject = remoteStream;
+    });
+});
+
+// Función para llamar a otro dispositivo
+function connectToPeer() {
+    const remoteId = document.getElementById('remote-id').value;
+    const call = peer.call(remoteId, localStream);
+    call.on('stream', (remoteStream) => {
+        document.getElementById('remote-video').srcObject = remoteStream;
+    });
+}
