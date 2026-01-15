@@ -62,17 +62,4 @@ function stopRecording() {
     document.getElementById('start-rec').style.display = 'inline-block';
     document.getElementById('stop-rec').style.display = 'none';
     document.getElementById('recording-status').style.display = 'none';
-}        document.getElementById('remote-video').srcObject = remoteStream;
-    });
-});
-
-// 4. Función para llamar
-function connectToPeer() {
-    const remoteId = document.getElementById('remote-id').value;
-    if (!remoteId) return alert("Introduce un ID válido");
-    
-    const call = peer.call(remoteId, localStream);
-    call.on('stream', (remoteStream) => {
-        document.getElementById('remote-video').srcObject = remoteStream;
-    });
 }
