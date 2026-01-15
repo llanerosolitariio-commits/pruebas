@@ -1,40 +1,47 @@
-const peer = new Peer();
-const noSleep = new NoSleep();
-let localStream;
-let mediaRecorder;
-let recordedChunks = [];
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vigilancia Pro - GitHub</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; margin: 0; }
+        .panel { background: #222; padding: 15px; border-bottom: 2px solid #444; }
+        video { width: 100%; max-width: 600px; background: #000; margin-top: 10px; border-radius: 10px; }
+        .local-preview { width: 120px; position: fixed; top: 10px; right: 10px; border: 1px solid #28a745; z-index: 10; }
+        .controls { margin: 15px; padding: 10px; }
+        button { padding: 12px; margin: 5px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; }
+        input { padding: 12px; width: 200px; border-radius: 5px; border: 1px solid #444; }
+        .btn-rec { background: #dc3545; color: white; }
+    </style>
+</head>
+<body>
 
-peer.on('open', id => { document.getElementById('my-id').innerText = id; });
+    <div class="panel">
+        <p>Tu ID: <strong id="my-id">Cargando...</strong></p>
+        <button onclick="activarSistema()" id="btn-init" style="background: #28a745; color: white;">1. ACTIVAR CÁMARA Y ANTI-BLOQUEO</button>
+    </div>
 
-// Función crucial: Activa la cámara y el bloqueo de suspensión
-async function activarSistema() {
-    noSleep.enable(); 
-    try {
-        localStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment" }, 
-            audio: true 
-        });
-        document.getElementById('local-video').srcObject = localStream;
-        document.getElementById('btn-init').innerText = "✓ SISTEMA ACTIVO";
-        document.getElementById('btn-init').style.background = "#555";
-    } catch (err) {
-        alert("Error al acceder a la cámara: " + err);
-    }
-}
+    <div class="controls">
+        <input type="text" id="remote-id" placeholder="ID del otro celular">
+        <button onclick="connectToPeer()" style="background: #007bff; color: white;">2. CONECTAR</button>
+        <br><br>
+        <button id="start-rec" class="btn-rec" onclick="startRecording()">🔴 Iniciar Grabación</button>
+        <button id="stop-rec" style="display:none; background:#6c757d; color:white;" onclick="stopRecording()">⏹️ Detener y Guardar</button>
+    </div>
 
-// Escuchar llamadas (el celular que es "visto")
-peer.on('call', call => {
-    call.answer(localStream);
-    call.on('stream', remoteStream => {
-        document.getElementById('remote-video').srcObject = remoteStream;
-        // Si queremos que el receptor grabe automáticamente lo que ve:
-        startRecording(remoteStream);
-    });
-});
+    <div id="recording-status" style="display: none; color: #dc3545; font-weight: bold;">
+        ⏺ GRABANDO...
+    </div>
 
-// Conectar (el celular que "ve")
-function connectToPeer() {
-    const remoteId = document.getElementById('remote-id').value;
+    <video id="remote-video" autoplay playsinline></video>
+    <video id="local-video" class="local-preview" autoplay playsinline muted></video>
+
+    <script src="script.js"></script>
+</body>
+</html>    const remoteId = document.getElementById('remote-id').value;
     const call = peer.call(remoteId, localStream);
     call.on('stream', remoteStream => {
         document.getElementById('remote-video').srcObject = remoteStream;
