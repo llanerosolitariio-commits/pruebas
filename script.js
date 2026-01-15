@@ -4,43 +4,32 @@ let localStream;
 let mediaRecorder;
 let recordedChunks = [];
 
-// Mostrar ID cuando PeerJS esté listo
+// Obtener ID
 peer.on('open', id => { 
     document.getElementById('my-id').innerText = id; 
 });
 
-// Función Maestra para activar todo
+// Activar sistema
 async function activarSistemaCompleto() {
-    // 1. Evitar que la pantalla se apague (simulación visual)
     noSleep.enable(); 
-    
-    // 2. Activar audio silencioso (simulación de proceso activo para Android)
     const audio = document.getElementById('silent-audio');
     audio.volume = 0.01; 
-    audio.play();
+    audio.play().catch(e => console.log("Audio requiere click"));
 
     try {
-        // 3. Solicitar Cámara y Micrófono
         localStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                facingMode: "environment", // Usa la cámara trasera
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            }, 
+            video: { facingMode: "environment" }, 
             audio: true 
         });
-        
         document.getElementById('local-video').srcObject = localStream;
-        document.getElementById('btn-init').innerText = "✓ SISTEMA TOTALMENTE ACTIVO";
+        document.getElementById('btn-init').innerText = "✓ SISTEMA ACTIVO";
         document.getElementById('btn-init').style.background = "#444";
-        
-        console.log("Persistencia de hardware iniciada.");
     } catch (err) {
-        alert("Error de acceso: " + err);
+        alert("Error de cámara: " + err);
     }
 }
 
-// Escuchar llamadas entrantes
+// Recibir llamada
 peer.on('call', call => {
     call.answer(localStream);
     call.on('stream', remoteStream => {
@@ -48,36 +37,30 @@ peer.on('call', call => {
     });
 });
 
-// Llamar a otro celular
+// Llamar
 function connectToPeer() {
-    const remoteId = document.getElementById('remote-id').value;
-    if (!remoteId) return alert("Ingresa un ID");
-    
-    const call = peer.call(remoteId, localStream);
-    call.on('stream', remoteStream => {
-        document.getElementById('remote-video').srcObject = remoteStream;
+    const rId = document.getElementById('remote-id').value;
+    if (!rId) return alert("Falta ID");
+    const call = peer.call(rId, localStream);
+    call.on('stream', rs => {
+        document.getElementById('remote-video').srcObject = rs;
     });
 }
 
-// Lógica de Grabación de Video
+// Grabación
 function startRecording() {
-    if (!localStream) return alert("Primero activa el sistema");
-    
+    if (!localStream) return alert("Inicia la cámara primero");
     recordedChunks = [];
-    // Intentamos usar un formato compatible con móviles
-    mediaRecorder = new MediaRecorder(localStream, { mimeType: 'video/webm;codecs=vp8' });
-    
+    mediaRecorder = new MediaRecorder(localStream);
     mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
-    
     mediaRecorder.onstop = () => {
         const blob = new Blob(recordedChunks, { type: 'video/webm' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `vigilancia_${new Date().getTime()}.webm`;
+        a.download = 'video.webm';
         a.click();
     };
-
     mediaRecorder.start();
     document.getElementById('start-rec').style.display = 'none';
     document.getElementById('stop-rec').style.display = 'inline-block';
@@ -85,10 +68,8 @@ function startRecording() {
 }
 
 function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.stop();
-        document.getElementById('start-rec').style.display = 'inline-block';
-        document.getElementById('stop-rec').style.display = 'none';
-        document.getElementById('recording-status').style.display = 'none';
-    }
-}}
+    mediaRecorder.stop();
+    document.getElementById('start-rec').style.display = 'inline-block';
+    document.getElementById('stop-rec').style.display = 'none';
+    document.getElementById('recording-status').style.display = 'none';
+}

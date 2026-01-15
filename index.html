@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vigilancia APK Persistente</title>
+    <title>Vigilancia APK Pro</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
     <style>
@@ -16,34 +16,33 @@
         input { padding: 15px; width: 85%; max-width: 280px; border-radius: 8px; border: 1px solid #444; background: #222; color: #fff; margin-bottom: 10px; }
         .btn-main { background: #28a745; color: white; }
         .btn-connect { background: #007bff; color: white; }
-        .btn-rec { background: #dc3545; color: white; }
-        #recording-status { color: #dc3545; font-weight: bold; padding: 10px; display: none; }
+        #recording-status { color: #dc3545; font-weight: bold; display: none; margin: 10px; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <p>ID de este dispositivo: <br><strong id="my-id" style="color: #ffc107; font-size: 1.2em;">Generando...</strong></p>
-        <button class="btn-main" onclick="activarSistemaCompleto()" id="btn-init">1. ACTIVAR SISTEMA (CAM/AUDIO)</button>
+        <p>Tu ID: <strong id="my-id" style="color: #ffc107;">Cargando ID...</strong></p>
+        <button class="btn-main" onclick="activarSistemaCompleto()" id="btn-init">1. ACTIVAR CAMARA Y PERSISTENCIA</button>
     </div>
 
     <div class="controls">
         <input type="text" id="remote-id" placeholder="Pegar ID del otro celular">
-        <button class="btn-connect" onclick="connectToPeer()">2. CONECTAR A REMOTO</button>
-        <hr style="border: 0.5px solid #333; margin: 15px 0;">
-        <button id="start-rec" class="btn-rec" onclick="startRecording()">🔴 INICIAR GRABACIÓN</button>
-        <button id="stop-rec" style="display:none; background:#6c757d; color:white;" onclick="stopRecording()">⏹️ GUARDAR VIDEO</button>
+        <button class="btn-connect" onclick="connectToPeer()">2. CONECTAR</button>
+        <hr style="border: 0.5px solid #333;">
+        <button id="start-rec" style="background:#dc3545; color:white;" onclick="startRecording()">🔴 GRABAR</button>
+        <button id="stop-rec" style="display:none; background:#6c757d; color:white;" onclick="stopRecording()">⏹️ GUARDAR</button>
     </div>
 
-    <div id="recording-status">⏺ GRABANDO EN ESTE DISPOSITIVO...</div>
+    <div id="recording-status">⏺ GRABANDO...</div>
 
     <video id="remote-video" autoplay playsinline></video>
     <video id="local-video" class="local-preview" autoplay playsinline muted></video>
 
-    <audio id="silent-audio" loop>
-        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    <audio id="silent-audio" loop preload="auto">
+        <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
     </audio>
 
     <script src="script.js"></script>
 </body>
-</html></html>
+</html>
