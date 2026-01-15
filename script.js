@@ -1,40 +1,68 @@
 const peer = new Peer();
 const noSleep = new NoSleep();
 let localStream;
+let mediaRecorder;
+let recordedChunks = [];
 
-// 1. Manejo del ID de PeerJS
-peer.on('open', (id) => {
-    document.getElementById('my-id').innerText = id;
+peer.on('open', id => { 
+    document.getElementById('my-id').innerText = id; 
 });
 
-// 2. Activar NoSleep y Cámara (Requiere interacción del usuario)
-document.getElementById('enable-nosleep').addEventListener('click', function() {
-    noSleep.enable(); // Evita que la pantalla se apague
-    startCamera();
-    this.style.backgroundColor = "#555";
-    this.innerText = "✓ Sistema Activo (No se dormirá)";
-    document.getElementById('controls').style.display = "block";
-});
-
-async function startCamera() {
+async function activarSistema() {
+    noSleep.enable(); 
     try {
-        // Configuramos para usar la cámara trasera por defecto (ideal para vigilancia)
-        const constraints = { 
+        localStream = await navigator.mediaDevices.getUserMedia({ 
             video: { facingMode: "environment" }, 
             audio: true 
-        };
-        localStream = await navigator.mediaDevices.getUserMedia(constraints);
+        });
         document.getElementById('local-video').srcObject = localStream;
+        document.getElementById('btn-init').innerText = "✓ SISTEMA ACTIVO";
+        document.getElementById('btn-init').style.background = "#555";
     } catch (err) {
-        alert("Error al acceder a la cámara. Revisa los permisos HTTPS en GitHub.");
+        alert("Error: " + err);
     }
 }
 
-// 3. Responder llamadas automáticamente
-peer.on('call', (call) => {
+peer.on('call', call => {
     call.answer(localStream);
-    call.on('stream', (remoteStream) => {
+    call.on('stream', remoteStream => {
         document.getElementById('remote-video').srcObject = remoteStream;
+    });
+});
+
+function connectToPeer() {
+    const remoteId = document.getElementById('remote-id').value;
+    const call = peer.call(remoteId, localStream);
+    call.on('stream', remoteStream => {
+        document.getElementById('remote-video').srcObject = remoteStream;
+    });
+}
+
+function startRecording() {
+    if (!localStream) return alert("Primero activa la cámara");
+    recordedChunks = [];
+    mediaRecorder = new MediaRecorder(localStream);
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'grabacion.webm';
+        a.click();
+    };
+    mediaRecorder.start();
+    document.getElementById('start-rec').style.display = 'none';
+    document.getElementById('stop-rec').style.display = 'inline-block';
+    document.getElementById('recording-status').style.display = 'block';
+}
+
+function stopRecording() {
+    mediaRecorder.stop();
+    document.getElementById('start-rec').style.display = 'inline-block';
+    document.getElementById('stop-rec').style.display = 'none';
+    document.getElementById('recording-status').style.display = 'none';
+}        document.getElementById('remote-video').srcObject = remoteStream;
     });
 });
 
