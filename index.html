@@ -3,32 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stream Remoto con PeerJS</title>
+    <title>Stream Seguro - GitHub</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
+    
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #e0e0e0; text-align: center; padding: 20px; }
-        .container { max-width: 500px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        video { width: 100%; border-radius: 10px; background: #000; margin-top: 15px; transform: scaleX(-1); }
-        input { width: 80%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; }
-        button { background: #28a745; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        button.call { background: #007bff; }
-        #my-id { color: #ffc107; font-size: 1.2em; word-break: break-all; }
+        body { font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; margin: 0; padding: 20px; }
+        .status { padding: 10px; background: #333; border-radius: 8px; margin-bottom: 20px; }
+        video { width: 100%; max-width: 500px; border-radius: 10px; background: #000; }
+        .local-preview { width: 150px; position: fixed; bottom: 20px; right: 20px; border: 2px solid #007bff; }
+        button { padding: 15px; margin: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-start { background: #28a745; color: white; }
+        .btn-connect { background: #007bff; color: white; }
+        input { padding: 12px; border-radius: 5px; border: none; width: 250px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Cámara Remota</h2>
-        <p>Tu ID de conexión:<br><span id="my-id">Cargando...</span></p>
-        
-        <input type="text" id="remote-id" placeholder="Pega el ID del otro celular aquí">
-        <button class="call" onclick="connectToPeer()">Conectar y Ver</button>
-        
-        <hr style="border: 0.5px solid #333; margin: 20px 0;">
-        
-        <p>Vista de Cámara:</p>
-        <video id="remote-video" autoplay playsinline></video>
-        <video id="local-video" autoplay playsinline muted style="width: 30%; position: absolute; bottom: 10px; right: 10px; border: 2px solid white;"></video>
+
+    <div class="status">
+        <p>Tu ID: <strong id="my-id">Generando...</strong></p>
+        <button class="btn-start" id="enable-nosleep">1. Activar Vigilancia (Anti-Bloqueo)</button>
     </div>
+
+    <div id="controls" style="display:none;">
+        <input type="text" id="remote-id" placeholder="Pegar ID del otro celular">
+        <button class="btn-connect" onclick="connectToPeer()">2. Conectar a Remoto</button>
+    </div>
+
+    <video id="remote-video" autoplay playsinline></video>
+    <video id="local-video" class="local-preview" autoplay playsinline muted></video>
+
     <script src="script.js"></script>
 </body>
 </html>
