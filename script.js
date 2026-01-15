@@ -1,22 +1,36 @@
 const peer = new Peer();
+const noSleep = new NoSleep();
 let localStream;
 
-// Obtener ID del dispositivo actual
+// 1. Manejo del ID de PeerJS
 peer.on('open', (id) => {
     document.getElementById('my-id').innerText = id;
 });
 
-// Pedir permiso de cámara al cargar
-navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: true })
-    .then((stream) => {
-        localStream = stream;
-        document.getElementById('local-video').srcObject = stream;
-    })
-    .catch(err => {
-        alert("Error de cámara: " + err);
-    });
+// 2. Activar NoSleep y Cámara (Requiere interacción del usuario)
+document.getElementById('enable-nosleep').addEventListener('click', function() {
+    noSleep.enable(); // Evita que la pantalla se apague
+    startCamera();
+    this.style.backgroundColor = "#555";
+    this.innerText = "✓ Sistema Activo (No se dormirá)";
+    document.getElementById('controls').style.display = "block";
+});
 
-// Responder llamadas automáticas
+async function startCamera() {
+    try {
+        // Configuramos para usar la cámara trasera por defecto (ideal para vigilancia)
+        const constraints = { 
+            video: { facingMode: "environment" }, 
+            audio: true 
+        };
+        localStream = await navigator.mediaDevices.getUserMedia(constraints);
+        document.getElementById('local-video').srcObject = localStream;
+    } catch (err) {
+        alert("Error al acceder a la cámara. Revisa los permisos HTTPS en GitHub.");
+    }
+}
+
+// 3. Responder llamadas automáticamente
 peer.on('call', (call) => {
     call.answer(localStream);
     call.on('stream', (remoteStream) => {
@@ -24,10 +38,10 @@ peer.on('call', (call) => {
     });
 });
 
-// Función para llamar al ID ingresado
+// 4. Función para llamar
 function connectToPeer() {
     const remoteId = document.getElementById('remote-id').value;
-    if (!remoteId) return alert("Ingresa un ID");
+    if (!remoteId) return alert("Introduce un ID válido");
     
     const call = peer.call(remoteId, localStream);
     call.on('stream', (remoteStream) => {
