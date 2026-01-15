@@ -1,40 +1,80 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vigilancia Pro - GitHub</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
-    <style>
-        body { font-family: sans-serif; background: #121212; color: white; text-align: center; margin: 0; }
-        .panel { background: #222; padding: 15px; border-bottom: 2px solid #444; }
-        video { width: 100%; max-width: 600px; background: #000; margin-top: 10px; }
-        .local-preview { width: 120px; position: fixed; top: 10px; right: 10px; border: 1px solid #28a745; }
-        .controls { margin: 15px; }
-        button { padding: 12px; margin: 5px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-rec { background: #dc3545; color: white; }
-        .btn-stop { background: #6c757d; color: white; display: none; }
-        #status-dot { height: 10px; width: 10px; background-color: #bbb; border-radius: 50%; display: inline-block; margin-right: 5px; }
-    </style>
-</head>
-<body>
+const peer = new Peer();
+const noSleep = new NoSleep();
+let localStream;
+let mediaRecorder;
+let recordedChunks = [];
 
-    <div class="panel">
-        <p>ID: <span id="my-id">...</span></p>
-        <button onclick="activarSistema()" id="btn-init" style="background: #28a745; color: white;">ACTIVAR SISTEMA ANTI-BLOQUEO</button>
-    </div>
+peer.on('open', id => { document.getElementById('my-id').innerText = id; });
 
-    <div class="controls">
-        <input type="text" id="remote-id" placeholder="ID del otro dispositivo" style="padding: 10px; width: 200px;">
-        <button onclick="connectToPeer()" style="background: #007bff; color: white;">Conectar</button>
-        <hr>
-        <button id="start-rec" class="btn-rec" onclick="startRecording()">🔴 Iniciar Grabación</button>
-        <button id="stop-rec" class="btn-stop" onclick="stopRecording()">⏹️ Detener y Guardar</button>
-    </div>
+// Función crucial: Activa la cámara y el bloqueo de suspensión
+async function activarSistema() {
+    noSleep.enable(); 
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment" }, 
+            audio: true 
+        });
+        document.getElementById('local-video').srcObject = localStream;
+        document.getElementById('btn-init').innerText = "✓ SISTEMA ACTIVO";
+        document.getElementById('btn-init').style.background = "#555";
+    } catch (err) {
+        alert("Error al acceder a la cámara: " + err);
+    }
+}
 
-    <div id="recording-status" style="display: none; color: #dc3545; font-weight: bold; margin-bottom: 10px;">
-        <span id="status-dot" style="background-color: #dc3545;"></span> GRABANDO...
+// Escuchar llamadas (el celular que es "visto")
+peer.on('call', call => {
+    call.answer(localStream);
+    call.on('stream', remoteStream => {
+        document.getElementById('remote-video').srcObject = remoteStream;
+        // Si queremos que el receptor grabe automáticamente lo que ve:
+        startRecording(remoteStream);
+    });
+});
+
+// Conectar (el celular que "ve")
+function connectToPeer() {
+    const remoteId = document.getElementById('remote-id').value;
+    const call = peer.call(remoteId, localStream);
+    call.on('stream', remoteStream => {
+        document.getElementById('remote-video').srcObject = remoteStream;
+    });
+}
+
+// --- LÓGICA DE GRABACIÓN ---
+
+function startRecording(streamToRecord = null) {
+    const stream = streamToRecord || localStream;
+    if (!stream) return alert("No hay flujo de video para grabar");
+
+    recordedChunks = [];
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus' });
+
+    mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) recordedChunks.push(event.data);
+    };
+
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `grabacion_${new Date().getTime()}.webm`;
+        a.click();
+    };
+
+    mediaRecorder.start();
+    document.getElementById('start-rec').style.display = 'none';
+    document.getElementById('stop-rec').style.display = 'inline-block';
+    document.getElementById('recording-status').style.display = 'block';
+}
+
+function stopRecording() {
+    mediaRecorder.stop();
+    document.getElementById('start-rec').style.display = 'inline-block';
+    document.getElementById('stop-rec').style.display = 'none';
+    document.getElementById('recording-status').style.display = 'none';
+}        <span id="status-dot" style="background-color: #dc3545;"></span> GRABANDO...
     </div>
 
     <video id="remote-video" autoplay playsinline></video>
